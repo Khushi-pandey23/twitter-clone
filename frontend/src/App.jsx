@@ -17,10 +17,9 @@ function App() {
     queryFn: async() => {
       try {
         const res = await fetch("/api/auth/me")
-        const data = await res.json();
+        const data = await res.json();  
         if(data.error) return null // To take it to the login page
         if(!res.ok) throw new Error(data.error || "Something went wrong")
-        console.log("Auth user is here: ",data);
         return data;
 
       } catch (err) {

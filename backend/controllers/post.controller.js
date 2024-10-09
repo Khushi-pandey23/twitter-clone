@@ -158,14 +158,14 @@ export const getAllPosts = async (req,res) =>{
         });
 
         if(posts.length === 0){
-            res.status(200).json([])
+            return res.status(200).json([])
         }
 
-        res.status(200).json(posts)
+        return res.status(200).json(posts)
 
     } catch (error) {
-        res.status(500).json({error: "Internal service error"})
         console.log("Error in getAllPosts",error);
+        return res.status(500).json({error: "Internal service error"})
     }
 }
 
