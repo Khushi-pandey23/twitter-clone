@@ -8,11 +8,18 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast  from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
+import { formatPostDate } from "../../utils/date";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
   const {data:authUser} = useQuery({queryKey: ["authUser"]})
   const queryClient = useQueryClient();
+  const postOwner = post.user;
+
+  const isLiked = post.likes.includes(authUser._id);
+  const isMyPost = authUser._id === post.user._id;
+  const formattedDate = formatPostDate(post.createdAt)
+
 
   const {mutate: deletePost, isPending:isDeleting} = useMutation({
 	mutationFn: async () => {
@@ -67,11 +74,34 @@ const Post = ({ post }) => {
     }
   })
 
-  const postOwner = post.user;
-  const isLiked = post.likes.includes(authUser._id);
-  const isMyPost = authUser._id === post.user._id;
-  const formattedDate = "1h";
-  const isCommenting = true;
+  const {mutate: commentPost, isPending: isCommenting} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch( `/api/posts/comment/${post._id}`,{
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({text: comment})
+        })
+        const data = await res.json()
+        if(!res.ok) throw new Error(data.error || "Something went wrong")
+        
+        return data
+
+      } catch (err) {
+        throw new Error(err)
+      }
+    },
+    onSuccess: () => {
+      toast.success("Comment posted succesfully")
+      setComment("")
+      queryClient.invalidateQueries({queryKey: ["posts"]})
+    },
+    onError: (error) => {
+      toast.error(error.message)
+    }
+  })
 
   const handleDeletePost = () => {
 	deletePost();
@@ -79,6 +109,8 @@ const Post = ({ post }) => {
 
   const handlePostComment = (e) => {
     e.preventDefault();
+    if(isCommenting) return
+    commentPost();
   };
 
   const handleLikePost = () => {
@@ -146,9 +178,10 @@ const Post = ({ post }) => {
               >
                 <FaRegComment className="w-4 h-4 text-slate-500 group-hover:text-sky-400" />
                 <span className="text-sm text-slate-500 group-hover:text-sky-400">
-                  {post.comments?.length || 0}
+                  {post.comment?.length || 0}
                 </span>
               </div>
+              {/* Modal Component from DaisyUI */}
               <dialog
                 id={`comments_modal${post._id}`}
                 className="modal border-none outline-none"
@@ -156,12 +189,12 @@ const Post = ({ post }) => {
                 <div className="modal-box rounded border border-gray-600">
                   <h3 className="font-bold text-lg mb-4">COMMENTS</h3>
                   <div className="flex flex-col gap-3 max-h-60 overflow-auto">
-                    {(!post.comments || post.comments.length === 0) && (
+                    {post.comment?.length === 0 && (
                       <p className="text-sm text-slate-500">
                         No comments yet 🤔 Be the first one 😉
                       </p>
                     )}
-                    {post.comments?.map((comment) => (
+                    {post.comment?.map((comment) => (
                       <div key={comment._id} className="flex gap-2 items-start">
                         <div className="avatar">
                           <div className="w-8 rounded-full">
