@@ -32,12 +32,6 @@ This is a **Twitter Clone** 🐦 application built using the **MERN Stack** (Mon
 - 🌍 **Backend**: Hosted on Heroku/Render
 - 🗄️ **MongoDB**: Hosted on MongoDB Atlas
 
-## 📸 Screenshots
-
----
-
----
-
 ## ⚙️ Installation and Setup
 
 ### Prerequisites
